@@ -1,0 +1,287 @@
+<nz-alert
+  *ngIf="errorMsg"
+  nzType="error"
+  nzCloseable
+  nzMessage="Error"
+  [nzDescription]="errorMsg"
+>
+</nz-alert>
+<div nz-row>
+  <div nz-col nzSpan="8">
+    <h1>
+      Users List
+      <small style="color: rgb(110, 110, 110); font-size: 15px;"
+        >a list of users</small
+      >
+    </h1>
+  </div>
+  <div nz-col nzSpan="8" nzOffset="8">
+    <button
+      (click)="showModal(null)"
+      nz-button
+      nzType="primary"
+      style="margin: 10px 0; float: right;"
+    >
+      Create User
+    </button>
+  </div>
+</div>
+<nz-spin [nzSpinning]="isloading" nzTip="Loading...">
+  <div nz-row>
+    <nz-table #basicTable [nzData]="usersList" [nzPageSize]="5">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Address</th>
+          <th>Phone</th>
+          <th>Website</th>
+          <th>Company</th>
+          <th nzWidth="150px"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let data of basicTable.data">
+          <td>{{ data.name }}</td>
+          <td>{{ data.username }}</td>
+          <td>{{ data.email }}</td>
+          <td>{{ data.address.street + " | " + data.address.zipcode }}</td>
+          <td>{{ data.phone }}</td>
+          <td>{{ data.website }}</td>
+          <td>{{ data.company.name }}</td>
+          <td>
+            <button (click)="showModal(data.id)" nzSize="small" nz-button>
+              Edit
+            </button>
+            <nz-divider nzType="vertical"></nz-divider>
+            <button
+              nz-popconfirm
+              nzOkText="ok"
+              nzCancelText="cancel"
+              nzPopconfirmTitle="Delete this user?"
+              (nzOnConfirm)="deleteUser(data.id)"
+              nzPopconfirmPlacement="top"
+              nzSize="small"
+              nz-button
+              nzType="danger"
+            >
+              Delete
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </nz-table>
+  </div>
+</nz-spin>
+
+<!-- #region Form Modal -->
+
+<nz-modal
+  [nzStyle]="{ transition: 'width 400ms', top: '40px' }"
+  [nzWidth]="selectedTabIndex == 1 ? '1000' : '540'"
+  [(nzVisible)]="isVisible"
+  [nzTitle]="isEditMode ? 'Update User' : 'Create New User'"
+  [nzFooter]="modalFooter"
+  (nzOnCancel)="handleCancel()"
+>
+  <nz-spin [nzSpinning]="isloadingForm" nzTip="Loading...">
+    <nz-tabset
+      [nzTabPosition]="'top'"
+      [nzType]="'card'"
+      [(nzSelectedIndex)]="selectedTabIndex"
+    >
+      <nz-tab nzTitle="General">
+        <form nz-form [formGroup]="userForm">
+          <!-- Name -->
+          <nz-form-item>
+            <nz-form-control [nzErrorTip]="nameErrorTpl">
+              <input
+                placeholder="Name"
+                nz-input
+                formControlName="name"
+                id="name"
+              />
+
+              <ng-template #nameErrorTpl let-control>
+                <ng-container *ngIf="control.hasError('required')">
+                  Please input your name
+                </ng-container>
+              </ng-template>
+            </nz-form-control>
+          </nz-form-item>
+
+          <!-- Username -->
+          <nz-form-item>
+            <nz-form-control [nzErrorTip]="usernameErrorTpl">
+              <input
+                placeholder="Username"
+                nz-input
+                formControlName="username"
+                id="username"
+              />
+
+              <ng-template #usernameErrorTpl let-control>
+                <ng-container *ngIf="control.hasError('required')">
+                  Please input your username
+                </ng-container>
+                <ng-container *ngIf="control.hasError('used')">
+                  {{ control.value }} is already used!
+                </ng-container>
+              </ng-template>
+            </nz-form-control>
+          </nz-form-item>
+
+          <!-- E-mail -->
+          <nz-form-item>
+            <nz-form-control [nzErrorTip]="emailErrorTpl">
+              <input
+                placeholder="E-mail"
+                nz-input
+                formControlName="email"
+                id="email"
+              />
+
+              <ng-template #emailErrorTpl let-control>
+                <ng-container *ngIf="control.hasError('required')">
+                  Please input your email
+                </ng-container>
+                <ng-container *ngIf="control.hasError('email')">
+                  Your email is not valid
+                </ng-container>
+              </ng-template>
+            </nz-form-control>
+          </nz-form-item>
+
+          <!-- Phone -->
+          <nz-form-item>
+            <nz-form-control [nzErrorTip]="phoneErrorTpl">
+              <input
+                placeholder="Phone"
+                nz-input
+                formControlName="phone"
+                id="phone"
+              />
+
+              <ng-template #phoneErrorTpl let-control>
+                <ng-container *ngIf="control.hasError('required')">
+                  Please input your phone
+                </ng-container>
+              </ng-template>
+            </nz-form-control>
+          </nz-form-item>
+
+          <!-- Website -->
+          <nz-form-item>
+            <nz-form-control [nzErrorTip]="websiteErrorTpl">
+              <input
+                placeholder="Website"
+                nz-input
+                formControlName="website"
+                id="website"
+              />
+
+              <ng-template #websiteErrorTpl let-control>
+                <ng-container *ngIf="control.hasError('required')">
+                  Please input your website
+                </ng-container>
+              </ng-template>
+            </nz-form-control>
+          </nz-form-item>
+
+          <!-- Address -->
+          <div
+            nz-row
+            [nzGutter]="{ xs: 8, sm: 16, md: 24, lg: 32, xl: 32, xxl: 32 }"
+            formGroupName="address"
+          >
+            <h2 style="margin: 0 18px;">Address</h2>
+            <nz-form-item nz-col [nzLg]="12" [nzSm]="24" [nzXs]="24">
+              <nz-form-control nzErrorTip="Please input your Street!">
+                <input
+                  placeholder="Street"
+                  nz-input
+                  formControlName="street"
+                  id="street"
+                />
+              </nz-form-control>
+            </nz-form-item>
+
+            <nz-form-item nz-col [nzLg]="12" [nzSm]="24" [nzXs]="24">
+              <nz-form-control nzErrorTip="Please input your suite!">
+                <input
+                  placeholder="Suite"
+                  nz-input
+                  formControlName="suite"
+                  id="suite"
+                />
+              </nz-form-control>
+            </nz-form-item>
+
+            <nz-form-item nz-col [nzLg]="12" [nzSm]="24" [nzXs]="24">
+              <nz-form-control nzErrorTip="Please input your City!">
+                <input
+                  placeholder="City"
+                  nz-input
+                  formControlName="city"
+                  id="city"
+                />
+              </nz-form-control>
+            </nz-form-item>
+
+            <nz-form-item nz-col [nzLg]="12" [nzSm]="24" [nzXs]="24">
+              <nz-form-control nzErrorTip="Please input your City!">
+                <input
+                  placeholder="Zip-code"
+                  nz-input
+                  formControlName="zipcode"
+                  id="zipcode"
+                />
+              </nz-form-control>
+            </nz-form-item>
+          </div>
+
+          <!-- Company -->
+          <div
+            nz-row
+            [nzGutter]="{ xs: 8, sm: 16, md: 24, lg: 32, xl: 32, xxl: 32 }"
+            formGroupName="company"
+          >
+            <h2 style="margin: 0 18px;">Company</h2>
+            <nz-form-item nz-col [nzLg]="24" [nzSm]="24" [nzXs]="24">
+              <nz-form-control nzErrorTip="Please input company Name!">
+                <input
+                  placeholder="Company Name"
+                  nz-input
+                  formControlName="name"
+                  id="companyname"
+                />
+              </nz-form-control>
+            </nz-form-item>
+          </div>
+        </form>
+      </nz-tab>
+      <nz-tab *ngIf="userForm.value.id" nzTitle="Posts">
+        <ng-template nz-tab>
+          <app-posts [inputUserId]="userForm.value.id"></app-posts>
+        </ng-template>
+      </nz-tab>
+    </nz-tabset>
+
+    <ng-template #modalFooter>
+      <button nz-button nzType="default" (click)="handleCancel()">
+        Cancel
+      </button>
+      <button
+        [disabled]="isloadingForm"
+        nz-button
+        nzType="primary"
+        (click)="handleOk()"
+      >
+        Save
+      </button>
+    </ng-template>
+  </nz-spin>
+</nz-modal>
+
+<!-- #endregion -->

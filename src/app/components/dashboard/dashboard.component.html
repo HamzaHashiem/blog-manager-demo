@@ -1,0 +1,48 @@
+<nz-alert
+  *ngIf="errorMsg"
+  nzType="error"
+  nzCloseable
+  nzMessage="Error"
+  [nzDescription]="errorMsg"
+>
+</nz-alert>
+<div nz-row>
+  <div nz-col nzSpan="8">
+    <h1>
+      Dashboard
+      <small style="color: rgb(110, 110, 110); font-size: 15px;"
+        >overview of system statuses</small
+      >
+    </h1>
+  </div>
+  <div nz-col nzSpan="8" nzOffset="8">
+    <button
+      (click)="loadData()"
+      nz-button
+      style="margin: 10px 0; float: right;"
+    >
+      <i nz-icon nzType="reload" nzTheme="outline"></i>
+      Refresh
+    </button>
+  </div>
+</div>
+<div nz-row style="margin: 40px 0;">
+  <nz-spin [nzSpinning]="loading" nzTip="Loading...">
+    <div style="height: 60vh;" nz-col [nzLg]="24" [nzSm]="24" [nzXs]="24">
+      <ngx-charts-bar-vertical
+        [scheme]="colorScheme"
+        [results]="single"
+        [gradient]="gradient"
+        [xAxis]="showXAxis"
+        [barPadding]="barPadding"
+        [yAxis]="showYAxis"
+        [legend]="showLegend"
+        [showXAxisLabel]="showXAxisLabel"
+        [showYAxisLabel]="showYAxisLabel"
+        [xAxisLabel]="xAxisLabel"
+        [yAxisLabel]="yAxisLabel"
+      >
+      </ngx-charts-bar-vertical>
+    </div>
+  </nz-spin>
+</div>

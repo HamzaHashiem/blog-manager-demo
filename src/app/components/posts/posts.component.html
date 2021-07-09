@@ -1,0 +1,207 @@
+<nz-alert
+  *ngIf="errorMsg"
+  nzType="error"
+  nzCloseable
+  nzMessage="Error"
+  [nzDescription]="errorMsg"
+>
+</nz-alert>
+<div nz-row>
+  <div nz-col nzSpan="8">
+    <h1 *ngIf="inputUserId == null">
+      Posts List
+      <small style="color: rgb(110, 110, 110); font-size: 15px;"
+        >a list of posts</small
+      >
+    </h1>
+  </div>
+  <div nz-col nzSpan="8" nzOffset="8">
+    <button
+      (click)="showModal(null)"
+      nz-button
+      nzType="primary"
+      style="margin: 10px 0; float: right;"
+    >
+      Create Post
+    </button>
+  </div>
+</div>
+<nz-spin [nzSpinning]="isloading" nzTip="Loading...">
+  <div nz-row>
+    <nz-table #basicTable [nzData]="postsList" [nzPageSize]="5">
+      <thead>
+        <tr>
+          <th *ngIf="inputUserId == null" nzWidth="150px">User</th>
+          <th nzWidth="220px">Title</th>
+          <th>Body</th>
+          <th nzWidth="150px"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let data of basicTable.data">
+          <td *ngIf="inputUserId == null">{{ data.userName }}</td>
+          <td>{{ data.title }}</td>
+          <td>{{ data.body }}</td>
+          <td>
+            <button (click)="showModal(data.id)" nzSize="small" nz-button>
+              Edit
+            </button>
+            <nz-divider nzType="vertical"></nz-divider>
+            <button
+              nz-popconfirm
+              nzOkText="ok"
+              nzCancelText="cancel"
+              nzPopconfirmTitle="Delete this post?"
+              (nzOnConfirm)="deletePost(data.id)"
+              nzPopconfirmPlacement="top"
+              nzSize="small"
+              nz-button
+              nzType="danger"
+            >
+              Delete
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </nz-table>
+  </div>
+</nz-spin>
+
+<!-- #region Form Modal -->
+
+<nz-modal
+  nzWidth="1200"
+  [(nzVisible)]="isVisible"
+  [nzTitle]="isEditMode ? 'Update Post' : 'Create New Post'"
+  [nzFooter]="modalFooter"
+  (nzOnCancel)="handleCancel()"
+>
+  <nz-spin [nzSpinning]="isloadingForm" nzTip="Loading...">
+    <form nz-form [formGroup]="postForm">
+      <div *ngFor="let post of posts.controls; let i = index">
+        <button
+          *ngIf="i > 0"
+          (click)="removePost(i)"
+          nzSize="small"
+          nz-button
+          nzType="danger"
+          nzShape="circle"
+        >
+          <i nz-icon nzType="delete" nzTheme="outline"></i>
+        </button>
+        <div
+          nz-row
+          [nzGutter]="{ xs: 8, sm: 16, md: 24, lg: 32, xl: 32, xxl: 32 }"
+          [formGroup]="post"
+        >
+          <div nz-col [nzLg]="8" [nzSm]="24" [nzXs]="24">
+            <!-- User -->
+
+            <nz-form-item *ngIf="inputUserId != null">
+              <input
+                nz-input
+                [hidden]="true"
+                [(ngModel)]="inputUserId"
+                formControlName="userId"
+                id="userId"
+              />
+            </nz-form-item>
+            <nz-form-item
+              *ngIf="inputUserId == null"
+              nz-col
+              [nzLg]="24"
+              [nzSm]="24"
+              [nzXs]="24"
+            >
+              <nz-form-control [nzErrorTip]="userErrorTpl">
+                <nz-select
+                  nzShowSearch
+                  nzAllowClear
+                  nzPlaceHolder="Select a user"
+                  formControlName="userId"
+                  id="userId"
+                >
+                  <nz-option
+                    *ngFor="let item of usersList"
+                    [nzLabel]="item.name"
+                    [nzValue]="item.id"
+                  ></nz-option>
+                </nz-select>
+
+                <ng-template #userErrorTpl let-control>
+                  <ng-container *ngIf="control.hasError('required')">
+                    Please select user
+                  </ng-container>
+                </ng-template>
+              </nz-form-control>
+            </nz-form-item>
+
+            <!-- Title -->
+            <nz-form-item nz-col [nzLg]="24" [nzSm]="24" [nzXs]="24">
+              <nz-form-control [nzErrorTip]="titleErrorTpl">
+                <input
+                  placeholder="Title"
+                  nz-input
+                  formControlName="title"
+                  id="title"
+                />
+
+                <ng-template #titleErrorTpl let-control>
+                  <ng-container *ngIf="control.hasError('required')">
+                    Please input title
+                  </ng-container>
+                </ng-template>
+              </nz-form-control>
+            </nz-form-item>
+          </div>
+          <div nz-col [nzLg]="16" [nzSm]="24" [nzXs]="24">
+            <!-- Body -->
+            <nz-form-item nz-col [nzLg]="24" [nzSm]="24" [nzXs]="24">
+              <nz-form-control [nzErrorTip]="bodyErrorTpl">
+                <textarea
+                  style="resize: vertical;"
+                  rows="5"
+                  placeholder="Body..."
+                  nz-input
+                  formControlName="body"
+                  id="body"
+                ></textarea>
+
+                <ng-template #bodyErrorTpl let-control>
+                  <ng-container *ngIf="control.hasError('required')">
+                    Please input body
+                  </ng-container>
+                </ng-template>
+              </nz-form-control>
+            </nz-form-item>
+          </div>
+          <nz-divider nzType="horizontal"></nz-divider>
+        </div>
+      </div>
+
+      <nz-form-item>
+        <nz-form-control>
+          <button (click)="addPost()" nz-button type="button">
+            Add Post
+          </button>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+
+    <ng-template #modalFooter>
+      <button nz-button nzType="default" (click)="handleCancel()">
+        Cancel
+      </button>
+      <button
+        [disabled]="isloadingForm"
+        nz-button
+        nzType="primary"
+        (click)="handleOk()"
+      >
+        Save
+      </button>
+    </ng-template>
+  </nz-spin>
+</nz-modal>
+
+<!-- #endregion -->
